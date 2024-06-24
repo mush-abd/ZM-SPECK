@@ -5,31 +5,15 @@ from numpy import array
 from PIL import Image as im
 np.set_printoptions(threshold=np.inf)
 
+
+
+
 def image_to_array(image):
 
     gray =  cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     array2D = np.array(gray)
-    # flatten_array = array2D.flatten()
-    # cv.imshow('image', image)
-    # cv.imshow('gray', gray)
-    # cv.waitKey(0)
-
-    # image_array = np.array(gray)
     image_array = array2D.flatten()
-    np.save('array_coeffs.npy', image_array)
-    # print(image_array)
-    # # image reconstruction before
-    # side = int(math.sqrt(len(image_array)))
-    # img_matrix = np.reshape(image_array, (side, side))
-    # # print(img_matrix)
-    # image = im.fromarray(img_matrix, 'L')
-    # image.show()
-    # cv.waitKey(0)
-    # image.save('reconstructed_before.png')
-    # from matplotlib import pyplot as plt
-    # plt.imshow(img_matrix, interpolation='nearest')
-    # plt.show()
-
+    np.save('image_coeffs', image_array)
     return image_array    
 
 
@@ -166,9 +150,7 @@ def main():
     image = cv.imread('cameraman.png')
     coeffs = image_to_array(image)
 
-    np.save('image_coeff_arr', coeffs)
-
-    with open('coeff.txt', 'w') as file:
+    with open('image_coeffs.txt', 'w') as file:
         file.write(str(coeffs))
 
     Npix = len(coeffs)
@@ -178,6 +160,7 @@ def main():
     lambda_root = Npix//4**L
 
     print(f'Coeffs: {coeffs}')
+     
     print("Npix:", Npix)
     
     # Initialize b and threshold
