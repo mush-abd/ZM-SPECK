@@ -2,7 +2,7 @@ import math
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-import pickle
+np.set_printoptions(threshold=np.inf)
 
 l = [1/math.sqrt(2),1/math.sqrt(2)]
 h = [-1/math.sqrt(2),1/math.sqrt(2)]
@@ -36,7 +36,7 @@ def frwt_2D(s, l, h):
     HL, HH = frwt2(HT, l, h)
 
     return np.array(np.transpose(LL)) ,np.array(np.transpose(LH)) ,np.array(np.transpose(HL)) ,np.array(np.transpose(HH))
-img = cv2.imread( "cameraman.png", 0)
+img = cv2.imread( "image_resized_2048.png", cv2.IMREAD_GRAYSCALE)
 print(img.shape)
 cA1 , cH1 , cV1 , cD1 = frwt_2D(img,l,h)
 
@@ -58,7 +58,11 @@ q1 = np.concatenate((q1_up, q1_down),axis=0)
 up = np.concatenate((q1,cV1),axis=1)
 down = np.concatenate((cH1,cD1),axis=1)
 final_image = np.concatenate((up,down),axis=0)
+# fin_img = final_image.flatten()
 
+# print(fin_img.shape, final_image.shape, len(fin_img))
+
+# np.save('fin_img', fin_img)
 plt.imshow(final_image,cmap="gray")
 plt.axis('off')
 plt.show()
@@ -69,7 +73,7 @@ def linear_indexing_wavelet_coeffs(image):
     M, N = image.shape
 
     # Calculate the number of subbands in the transformed image
-    # num_subbands = 3 * L + 1
+    num_subbands = 3 * L + 1
 
     # Initialize an array to store the linearly indexed coefficients
     linear_coeffs = np.zeros(M * N * (1 + 1 // 4 + 1 // 4 + 1 // 2), dtype=image.dtype)
@@ -95,26 +99,14 @@ def linear_indexing_wavelet_coeffs(image):
     return linear_coeffs
 
 # Example usage:
-linear_coeffs = linear_indexing_wavelet_coeffs(img)
+linear_coeffs = linear_indexing_wavelet_coeffs(final_image)
 linear_coeffs.shape
-#for x in linear_coeffs:
-    #print(x, end=", ")
-#print()
-print(linear_coeffs)
-open('linear_coeffs.txt', 'w').close()
-with open('linear_coeffs.txt', 'w') as file:
-        file.write(str(linear_coeffs))
-np.save('array_coeffs', linear_coeffs)
-# pickle.dump(linear_coeffs, 'linear_coeffs.txt')
-
-# for i, x in enumerate(linear_coeffs):
-#     if i < len(linear_coeffs) - 1:
-#         print(x, end=", ")
-#     else:
-#         print(x)
-
-
-plt.imshow(np.reshape(linear_coeffs,(256,256)),cmap='gray')
-plt.axis('off')
-plt.show()
-cv2.imwrite("linear_coeffs.png", img)
+arr_new = np.empty(len(linear_coeffs), dtype='int')
+for i in range(len(arr_new)):
+    arr_new[i] = math.trunc(linear_coeffs[i])
+np.save('array_coeffs', arr_new)
+# print(arr_new)
+# plt.imshow(np.reshape(arr_new ,(1024, 1024)),cmap='gray')
+# plt.axis('off')
+# plt.show()
+# cv2.imwrite("linear_coeffs.png", img)

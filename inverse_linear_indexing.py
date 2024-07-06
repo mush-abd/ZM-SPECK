@@ -58,3 +58,4 @@ reconstructed_image = inverse_frwt(reshaped_coeffs, LH_coeffs, HL_coeffs, HH_coe
 
 # Display or save the reconstructed image
 cv2.imwrite("reconstructed_image.png", reconstructed_image)
+
