@@ -14,6 +14,8 @@ def write_to_file(bin):
     while len(bin) < 8:
         bin = bin + '0'
     # counter = counter + 8
+    with open('new.txt', 'a') as file:
+        file.write(bin)
     bin_int = int(bin, 2)
     counter = counter + 8
     byte_num = struct.pack('B', bin_int)
@@ -27,18 +29,16 @@ def printKthBit(n, k):
 
 
 def Significance(coeffs,start_index, lambda_, T):
-    # print(f'Significance Call')
+    print(f'Significance Call')
     max_abs = np.max(np.abs(coeffs[start_index: start_index + lambda_]))
     if max_abs < T:
         return 0
-    elif T <= max_abs < 2 * T:
-        return 1
     else:
-        return None
+        return 1
 
 
 def Significance_PScan(index, T):
-    # print(f'Significance PScan Call')
+    print(f'Significance PScan Call')
     if abs(index) < T:
         return 0
     elif T <= abs(index) < 2 * T:
@@ -47,30 +47,28 @@ def Significance_PScan(index, T):
         return None
 
 def Significance_I(coeffs, start_index, Npix, T):
-    # print(f'Significance I call')
+    print(f'Significance I call')
     # print(coeffs[start_index: Npix - 1])
-    max_abs = np.max(np.abs(coeffs[start_index: Npix - 1]))
+    max_abs = np.max(np.abs(coeffs[start_index: Npix]))
     if max_abs < T:
         return 0
-    elif T <= max_abs < 2 * T:
-        return 1
     else:
-        return None
+        return 1
 
 def Process_I(coeffs, start_index, Npix, T):
-    # print(f'Process_I call')
+    print(f'Process_I call')
     global output
-    # if coeffs[start_index:Npix - 1]  is not []:
     significance = Significance_I(coeffs, start_index, Npix - 1, T)
+    print(output)
+    if len(output) == 8:
+        output = write_to_file(output)
     if significance == 0:
-        output = output + str(significance)
-        if len(output) == 8:
-            output = write_to_file(output)
         return Npix
+    return start_index
 
 
 def Pscan(coeffs, start_index, T, b):
-    # print(f'PSCan Call: ')
+    print(f'PSCan Call')
     global output
     for j in range(4):
         significance = Significance_PScan(coeffs[start_index + j], T)
@@ -78,7 +76,7 @@ def Pscan(coeffs, start_index, T, b):
             output = output + str(significance)
             if len(output) == 8:
                 output = write_to_file(output)
-
+                
         if significance == 1:
             if coeffs[start_index + j] < 0:
                 sign_bit = 1
@@ -97,40 +95,48 @@ def Pscan(coeffs, start_index, T, b):
 
 
 def EvalSL(start_index, lambda_):
-        # print(f'EvalSL call')
-        if start_index & 3 * lambda_ == 0:
+        print(f'EvalSL call')
+        while start_index & 3 * lambda_ == 0: #check if 'if' or 'while'
             lambda_ = lambda_ * 4
-        # print(f'Lambda return from EvalSL: {lambda_}')
+        print(f'Lambda return from EvalSL: {lambda_}')
         return lambda_
 
     
 
 def process_S(coeffs, start_index, lambda_, T, b):
-    # print(f'Process_S call')
+    print(f'Process_S call')
     global output
     significance = Significance(coeffs, start_index, lambda_, T)
-    if significance is not None:
-        output = output + str(significance)
-        if len(output) == 8:
-            output = write_to_file(output)
+    print(f'Significance: {significance}')
+    # if significance is not None:
+    print(f'output before: {output}')
+    output = output + str(significance)
+    print(f'output after: {output}')
+    if len(output) == 8:
+        output = write_to_file(output)
     if significance == 0:
+        print('Set skipped')
         start_index = start_index + lambda_
     else:
         if lambda_ > 4:
             lambda_ = lambda_//4
+            print(f'lambda_ becomes: {lambda_}')
             return start_index, lambda_
         else:
             start_index = Pscan(coeffs, start_index, T, b)
 
     lambda_ = EvalSL(start_index, lambda_)
-    # print(f'Return from Process_S, Start Index : {start_index}, Lambda: {lambda_}')
+    print(f'Return from Process_S, Start Index : {start_index}, Lambda: {lambda_}')
     return start_index, lambda_
 
 
 output = ''
 
 def main():
-
+    # lower_bound = -100  # Adjust the lower bound as needed
+    # upper_bound = 100 # Adjust the upper bound as needed
+    # coeffs = np.random.randint(lower_bound, upper_bound, size=64*64)
+    
     coeffs = np.load('array_coeffs.npy')
     print(coeffs.shape)
     Npix = len(coeffs)
@@ -140,6 +146,7 @@ def main():
 
     # print(f'Coeffs: {coeffs}')
     print("Npix:", Npix)
+    print(coeffs)
     
     # Initialize b and threshold
     initial_b = math.floor(math.log2(np.max(np.abs(coeffs))))
@@ -148,13 +155,14 @@ def main():
     global output
     
     open('fin_img.bin', 'wb').close()
+    open('new.txt', 'w').close()
     
     while b >= 0:
         print(f'Threshold: {2**b}')
         start_index = 0
         lambda_ = lambda_root
         T = 2**b
-        
+        # print(type(start_index), type(Npix))
         while start_index < Npix:
             # print(f'Starting Index: {start_index}')
             start_index, lambda_ = process_S(coeffs, start_index, lambda_, T, b)
@@ -162,9 +170,9 @@ def main():
                 # print(f'Process_I called from main')
                 start_index = Process_I(coeffs, start_index, Npix, T)
                 # print(f'start index returned from Process I: {start_index}')
-            # print(f'Next Starting Index: {start_index}, Next Lambda: {lambda_}\n\n\n')
+            print(f'Next Starting Index: {start_index}, Next Lambda: {lambda_}\n\n\n')
         
-        b = b - 1
+        b = b - 1 
 
     output = write_to_file(output)
     print(f'Counter : {counter}')
